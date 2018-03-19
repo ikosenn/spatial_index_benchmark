@@ -2,7 +2,7 @@
 // Copyright (C) 2013 Mateusz Loskot <mateusz@loskot.net>
 //
 // Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LICENSE_1_0.txt or copy 
+// (See accompanying file LICENSE_1_0.txt or copy
 // at http://www.boost.org/LICENSE_1_0.txt)
 //
 #include "spatial_index_benchmark.hpp"
@@ -33,7 +33,7 @@ void print_statistics(std::ostream& os, std::string const& lib, T const& i)
        << std::endl;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     try
     {
@@ -46,9 +46,23 @@ int main()
 #endif
 
         sibench::print_result_header(std::cout, lib);
-        
-        // Generate random objects for indexing
-        auto const boxes = sibench::generate_boxes(sibench::max_insertions);
+        // check if arguments are passed.
+        // TODO: Add validation checks
+        /*if (argc == 2) {
+           int dim = std::atoi(argv[0]);
+           if (dim == 2) {
+               std::cout << dim <<" Two dimen data passed" << std::endl;
+               boxes = sibench::generate_mm_2d(argv[0], dim);
+           }
+        } else {
+            // Generate random objects for indexing
+            boxes = sibench::generate_boxes(sibench::max_insertions);
+        }*/
+
+        std::cout << argv[1] <<" " << argv[2] << std::endl;
+       int dim = std::atoi(argv[3]);
+       std::cout << dim <<" Two dimen data passed" << std::endl;
+       auto const boxes = sibench::generate_mm_2d(argv[1], dim);
 
 #ifdef SIBENCH_BGI_RTREE_PARAMS_RT
         for (std::size_t next_capacity = 2; next_capacity <= sibench::max_capacities; ++next_capacity)
@@ -149,14 +163,30 @@ int main()
             // Benchmark: query
             {
                 std::size_t query_found = 0;
+                int dime = std::atoi(argv[3]);
+                char * q_filename = argv[2];
 
                 auto const marks = sibench::benchmark("query", sibench::max_queries, boxes,
-                    [&rtree, &query_found] (sibench::boxes2d_t const& boxes, std::size_t iterations)
+                    [&rtree, &query_found, dime, q_filename] (sibench::boxes2d_t const& boxes, std::size_t iterations)
                 {
                     std::vector<box_t> result;
                     result.reserve(iterations);
+                    auto const query_boxes = sibench::generate_mm_2d(q_filename, dime);
 
-                    for (std::size_t i = 0; i < iterations; ++i)
+                    for (size_t i = 0; i < query_boxes.size(); ++i)
+                    {
+                        result.clear();
+                        std::cout << "Qeurying" << std::endl;
+                        auto const& box = query_boxes[i];
+                        point_t p1(std::get<0>(box), std::get<1>(box));
+                        point_t p2(std::get<2>(box), std::get<3>(box));
+                        box_t region(p1, p2);
+                        rtree.insert(region);
+                        rtree.query(bgi::intersects(region), std::back_inserter(result));
+                        query_found += result.size();
+                        std::cout << query_found << " Query found" << std::endl;
+                    }
+                    /*for (std::size_t i = 0; i < iterations; ++i)
                     {
                         result.clear();
                         auto const& box = boxes[i];
@@ -165,7 +195,7 @@ int main()
                         box_t region(p1, p2);
                         rtree.query(bgi::intersects(region), std::back_inserter(result));
                         query_found += result.size();
-                    }
+                    }*/
                 });
 
                 query_r.accumulate(marks);

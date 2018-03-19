@@ -37,7 +37,7 @@ if (MSVC)
     string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-  endif()  
+  endif()
 else()
   set(CXX_COMMON_FLAGS "-pedantic -Wpointer-arith -Wcast-align -Wcast-qual")
     # "-pedantic -ansi -Wall -Wpointer-arith -Wcast-align -Wcast-qual -Wfloat-equal -Wredundant-decls")
@@ -65,7 +65,8 @@ endif()
 
 set(SRC_COMMON
     spatial_index_benchmark.hpp
-    high_resolution_timer.hpp)
+    high_resolution_timer.hpp
+    mm_rstar.hpp)
 
 macro(msg T)
   message(STATUS "Configuring ${T}")
@@ -77,7 +78,7 @@ elseif (CMAKE_HOST_UNIX)
 endif()
 
 ################################################################################
-# benchmark: libspatialindex 
+# benchmark: libspatialindex
 set(BSI lsi)
 
 # choose rtree split algorithm
@@ -114,7 +115,7 @@ set(BGI bgi)
 # choose tree balancing algorithm
 foreach(split_variant linear quadratic rstar)
   string(TOUPPER "${split_variant}" SPLITVARU)
-  
+
   # choose iterative insertion or bulk loading (Split-Tile-Recurse)
   foreach(load_variant itr blk)
     string(TOUPPER "${load_variant}" LOADVARU)
@@ -133,7 +134,7 @@ foreach(split_variant linear quadratic rstar)
       else()
         set(TARGET_BGI_BASE ${BGI}_${split_variant}_${load_variant})
       endif()
-      
+
       if (BGI_ENABLE_CT AND ${params_variant} STREQUAL "ct")
         set(TARGET_BGI ${TARGET_BGI_BASE}_${params_variant})
       else()

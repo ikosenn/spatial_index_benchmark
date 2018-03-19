@@ -3,7 +3,7 @@
 // Copyright (c) 2011-2013 Adam Wulkiewicz, Lodz, Poland.
 //
 // Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LICENSE_1_0.txt or copy 
+// (See accompanying file LICENSE_1_0.txt or copy
 // at http://www.boost.org/LICENSE_1_0.txt)
 //
 #ifndef MLOSKOT_SPATIAL_INDEX_BENCHMARK_HPP_INCLUDED
@@ -32,6 +32,7 @@
 #include <vector>
 #include <utility>
 #include "high_resolution_timer.hpp"
+#include "mm_rstar.hpp"
 
 namespace sibench
 {
@@ -72,9 +73,9 @@ inline std::pair<rtree_variant, std::string> get_rtree_load_variant()
 
 inline std::string get_banner(std::string const& lib)
 {
-    return lib 
-        + "(" 
-        + get_rtree_split_variant().second 
+    return lib
+        + "("
+        + get_rtree_split_variant().second
         + ','
         + get_rtree_load_variant().second
         + ")";
@@ -89,6 +90,8 @@ typedef std::tuple<coord_t, coord_t> point2d_t;
 typedef std::vector<point2d_t> points2d_t;
 typedef std::tuple<coord_t, coord_t, coord_t, coord_t> box2d_t;
 typedef std::vector<box2d_t> boxes2d_t;
+typedef std::tuple<coord_t, coord_t, coord_t, coord_t, coord_t, coord_t> box3d_t;
+typedef std::vector<box3d_t> boxes3d_t;
 
 template <typename T>
 struct random_generator
@@ -101,11 +104,11 @@ struct random_generator
 
     random_generator(std::size_t n)
         : max(static_cast<T>(n / 2))
-        , gen(1) // generate the same succession of results for everyone 
+        , gen(1) // generate the same succession of results for everyone
                  // (unsigned int)std::chrono::system_clock::now().time_since_epoch().count())
         , dis(-max, max)
     {}
-    
+
     result_type operator()()
     {
         return dis(gen);
@@ -141,10 +144,37 @@ inline points2d_t generate_points(std::size_t n)
     return std::move(points);
 }
 
+inline boxes3d_t generate_mm_3d(std::string filename, int dim){
+    std::vector<dataStore> box_data = mmrstar::read_file(filename, dim);
+    boxes3d_t boxes;
+    boxes.reserve(box_data.size());
+    for (auto const& data: box_data) {
+        boxes.emplace_back(
+            data.dimen[0].l, data.dimen[0].h,
+            data.dimen[1].l, data.dimen[1].h,
+            data.dimen[2].l, data.dimen[2].h
+        );
+    }
+    return boxes;
+}
+
+inline boxes2d_t generate_mm_2d(std::string filename, int dim){
+    std::vector<dataStore> box_data = mmrstar::read_file(filename, dim);
+    boxes2d_t boxes;
+    boxes.reserve(box_data.size());
+    for (auto const& data: box_data) {
+        boxes.emplace_back(
+            data.dimen[0].l, data.dimen[0].h,
+            data.dimen[1].l, data.dimen[1].h
+        );
+    }
+    return boxes;
+}
+
 inline boxes2d_t generate_boxes(std::size_t n)
 {
     random_generator<float> rg(n);
-    
+
     boxes2d_t boxes;
     boxes.reserve(n);
     for (decltype(n) i = 0; i < n; ++i)
@@ -153,7 +183,7 @@ inline boxes2d_t generate_boxes(std::size_t n)
         auto const y = rg();
         boxes.emplace_back(x - 0.5f, y - 0.5f, x + 0.5f, y + 0.5f);
     }
-    return std::move(boxes);   
+    return std::move(boxes);
 }
 
 
@@ -215,7 +245,7 @@ inline std::ostream& print_result(std::ostream& os, std::string const& /*lib*/, 
     std::streamsize wn(5), wf(10);
     os << std::left << std::setfill(' ') << std::fixed << std::setprecision(6)
        << std::setw(wn) << load.max_capacity
-       << std::setw(wn) << load.min_capacity 
+       << std::setw(wn) << load.min_capacity
        << std::setw(wf) << load.min
        << std::setw(wf) << query.min
        << std::endl;
@@ -242,7 +272,7 @@ inline std::ostream& print_result(std::ostream& os, std::string const& /*lib*/, 
     std::streamsize wn(5), wf(10);
     os << std::left << std::setfill(' ') << std::fixed << std::setprecision(6)
        << std::setw(wn) << load.max_capacity
-       << std::setw(wn) << load.min_capacity 
+       << std::setw(wn) << load.min_capacity
        << std::setw(wf) << load.min
        << std::setw(wf) << load.max
        << std::setw(wf) << query.min
