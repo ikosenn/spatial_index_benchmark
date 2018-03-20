@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 
         std::cout << argv[1] <<" " << argv[2] << std::endl;
        int dim = std::atoi(argv[3]);
-       std::cout << dim <<" Two dimen data passed" << std::endl;
+       // std::cout << dim <<" Two dimen data passed" << std::endl;
        auto const boxes = sibench::generate_mm_2d(argv[1], dim);
 
 #ifdef SIBENCH_BGI_RTREE_PARAMS_RT
@@ -176,15 +176,14 @@ int main(int argc, char *argv[])
                     for (size_t i = 0; i < query_boxes.size(); ++i)
                     {
                         result.clear();
-                        std::cout << "Qeurying" << std::endl;
+                        //std::cout << "Qeurying" << std::endl;
                         auto const& box = query_boxes[i];
                         point_t p1(std::get<0>(box), std::get<1>(box));
                         point_t p2(std::get<2>(box), std::get<3>(box));
                         box_t region(p1, p2);
-                        rtree.insert(region);
                         rtree.query(bgi::intersects(region), std::back_inserter(result));
                         query_found += result.size();
-                        std::cout << query_found << " Query found" << std::endl;
+                       // std::cout << result.size() << " Query found" << std::endl;
                     }
                     /*for (std::size_t i = 0; i < iterations; ++i)
                     {

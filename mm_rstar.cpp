@@ -15,12 +15,12 @@
  */
 int main() {
     int dim =2;
-    auto const boxes = mmrstar::read_file("rtree_data/data/rea03", dim);
+    auto const boxes = mmrstar::read_file("/home/vagrant/benchmark_data/query0/rea02", dim);
     for (auto const& data: boxes) {
 
         std::cout << data.dimen[0].l << " " << data.dimen[0].h << std::endl;
         std::cout << data.dimen[1].l << " " << data.dimen[1].h << std::endl;
-        std::cout << data.dimen[2].l << " " << data.dimen[2].h << std::endl;
+       // std::cout << data.dimen[2].l << " " << data.dimen[2].h << std::endl;
         std::cout << std::endl;
     }
     return 0;

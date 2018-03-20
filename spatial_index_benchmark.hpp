@@ -164,8 +164,8 @@ inline boxes2d_t generate_mm_2d(std::string filename, int dim){
     boxes.reserve(box_data.size());
     for (auto const& data: box_data) {
         boxes.emplace_back(
-            data.dimen[0].l, data.dimen[0].h,
-            data.dimen[1].l, data.dimen[1].h
+            data.dimen[0].l, data.dimen[1].l,
+            data.dimen[0].h, data.dimen[1].h
         );
     }
     return boxes;
