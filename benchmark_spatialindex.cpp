@@ -7,6 +7,10 @@
 //
 #include "spatial_index_benchmark.hpp"
 #include <spatialindex/SpatialIndex.h>
+
+#include "mem_stats.hpp"
+
+
 using namespace std;
 namespace si = SpatialIndex;
 
@@ -16,12 +20,16 @@ void print_statistics(std::ostream& os, std::string const& lib, si::ISpatialInde
     si::IStatistics* pstat = nullptr;
     i.getStatistics(&pstat);
     std::unique_ptr<si::IStatistics> stat(pstat);
-
     os << sibench::get_banner(lib)
        << " stats: reads=" << stat->getReads()
        << ", writes=" << stat->getWrites()
        << ", nodes=" << stat->getNumberOfNodes()
        << ", ndata=" << stat->getNumberOfData()
+     //  << ", splits=" << i.m_u64Hits.m_u64Splits
+      // << ", hits=" << stat->getHits()
+      // << ", misses=" << stat->getMisses()
+       //<< ", adjustments=" << stat->getAdjustments()
+      // << ", height=" << stat->getTreeHeight()
        << std::endl;
 }
 
@@ -165,10 +173,13 @@ int main(int argc, char* argv[])
         int dim = std::atoi(argv[3]);
         // std::cout << dim <<" Two dimen data passed" << std::endl;
         auto const boxes = sibench::generate_mm_2d(argv[1], dim);
+        std::cout << mem_stats::get_mem() << "Start Mem........" << std::endl;
 
         double const fill_factor = 0.5; // default: 0.7 // TODO: does it mean index_capacity * fill_factor?
-        for (std::size_t next_capacity = 2; next_capacity <= sibench::max_capacities; ++next_capacity)
+        for (std::size_t next_capacity = 12; next_capacity <= sibench::max_capacities; ++next_capacity)
         {
+
+            std::cout << mem_stats::get_mem() << "Start Mem--for start" << std::endl;
             // accumulated results store (load, query)
             sibench::result_info load_r;
             sibench::result_info query_r;
@@ -192,6 +203,7 @@ int main(int argc, char* argv[])
             std::unique_ptr<si::ISpatialIndex> rtree(si::RTree::createNewRTree(*sm,
                 fill_factor, index_capacity, leaf_capacity, dimension, variant, index_id));
 
+            std::cout << mem_stats::get_mem() << "Start Mem---Rtree" << std::endl;
             // Benchmark: insert
             {
                 auto const marks = sibench::benchmark("insert", boxes.size(), boxes,
@@ -214,7 +226,7 @@ int main(int argc, char* argv[])
                 load_r.accumulate(marks);
                 // debugging
                 //sibench::print_result(std::cout, lib, marks);
-                //print_statistics(std::cout, lib, *rtree);
+                print_statistics(std::cout, lib, *rtree);
             }
 #elif SIBENCH_RTREE_LOAD_BLK
             std::unique_ptr<si::ISpatialIndex> rtree;
@@ -233,7 +245,7 @@ int main(int argc, char* argv[])
                 load_r.accumulate(marks);
                 // debugging
                 //sibench::print_result(std::cout, lib, marks);
-                //print_statistics(std::cout, lib, *rtree);
+                print_statistics(std::cout, lib, *rtree);
             }
 #else
 #error Unknown rtree loading method
@@ -288,6 +300,7 @@ int main(int argc, char* argv[])
             }
 
             // single line per run
+            std::cout << mem_stats::get_mem() << "End Mem" << std::endl;
             sibench::print_result(std::cout, lib, load_r, query_r);
 
         } // for capacity
