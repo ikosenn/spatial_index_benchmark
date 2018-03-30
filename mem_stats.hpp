@@ -21,4 +21,17 @@ namespace mem_stats {
         }
         return mem_val;
     }
+
+    std::fstream::pos_type get_filesize(std::string filename) {
+        std::fstream file;
+        std::ios_base::iostate exceptionMask = file.exceptions() | std::ios::failbit;
+        file.exceptions(exceptionMask);
+        try {
+            file.open(filename);
+            file.seekg(0, std::ifstream::end);
+        } catch(std::ios_base::failure& e) {
+            std::cerr << e.what() << std::endl;
+        }
+        return file.tellg();
+    }
 }

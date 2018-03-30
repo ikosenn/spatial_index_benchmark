@@ -15,6 +15,45 @@ using namespace std;
 namespace si = SpatialIndex;
 
 namespace {
+
+inline std::ostream& print_result(std::ostream& os, std::string const& /*lib*/, sibench::result_info const& load, sibench::result_info const& query, si::ISpatialIndex const &i)
+{
+    assert(load.min_capacity == load.min_capacity);
+    assert(query.max_capacity == query.max_capacity);
+    si::IStatistics* pstat = nullptr;
+    i.getStatistics(&pstat);
+    std::unique_ptr<si::IStatistics> stat(pstat);
+    std::string mem_size =  mem_stats::get_mem();
+    std::streamsize wn(5), wf(18);
+    os << std::left << std::setfill(' ') << std::fixed << std::setprecision(6)
+       << std::setw(wn) << load.max_capacity
+       << std::setw(wn) << load.min_capacity
+       << std::setw(wf) << load.min
+       << std::setw(wf) << query.min
+       << std::setw(wf) << stat->getReads()
+       << std::setw(wf) << stat->getWrites()
+       << std::setw(wf) << stat->getNumberOfNodes()
+       << std::setw(wf) << stat->getNumberOfData()
+       << std::setw(wf) << mem_stats::get_filesize("/tmp/kalamashaka.idx")
+       << std::setw(wf) << mem_stats::get_filesize("/tmp/kalamashaka.dat")
+       << std::setw(wf) << mem_size
+       << std::endl;
+    return os;
+}
+
+inline std::ostream& print_result_header(std::ostream& os, std::string const& lib)
+{
+    std::streamsize const wn(5), wf(18), vn(2);
+    os << sibench::get_banner(lib) << ' ' << std::setw(wn * vn + wf * vn) << std::setfill('-') << ' ' << std::endl;
+    os << std::left << std::setfill(' ')
+       << std::setw(wn * vn) << "capacity" << std::setw(wf) << "load" << std::setw(wf) << "query"
+       << std::setw(wf) << "reads" << std::setw(wf) << "writes" << std::setw(wf) << "nodes" << std::setw(wf) << "ndata"
+       << std::setw(wf) << "i_file" << std::setw(wf) << "d_file"
+       << std::setw(wf) << "memory"
+       << std::endl;
+    return os;
+}
+
 void print_statistics(std::ostream& os, std::string const& lib, si::ISpatialIndex const& i)
 {
     si::IStatistics* pstat = nullptr;
@@ -181,13 +220,14 @@ void run_benchmark(std::string const& filename,std::string const& query_file,  i
     uint32_t const leaf_capacity = max_capacity; // default: 100
     uint32_t const dimension = 2;
     si::id_type index_id;
-    std::unique_ptr<si::IStorageManager> sm(si::StorageManager::createNewMemoryStorageManager());
+    std::string base_name = "/tmp/kalamashaka";
+    // std::unique_ptr<si::IStorageManager> sm(si::StorageManager::createNewMemoryStorageManager())
+    std::unique_ptr<si::IStorageManager> sm(si::StorageManager::createNewDiskStorageManager(base_name, 4096));;
 
 #ifdef SIBENCH_RTREE_LOAD_ITR
     std::unique_ptr<si::ISpatialIndex> rtree(si::RTree::createNewRTree(*sm,
         fill_factor, index_capacity, leaf_capacity, dimension, variant, index_id));
 
-    std::cout << mem_stats::get_mem() << "Start Mem---Rtree" << std::endl;
     // Benchmark: insert
     {
         auto const marks = sibench::benchmark("insert", boxes.size(), boxes,
@@ -210,7 +250,7 @@ void run_benchmark(std::string const& filename,std::string const& query_file,  i
         load_r.accumulate(marks);
         // debugging
         //sibench::print_result(std::cout, lib, marks);
-        print_statistics(std::cout, lib, *rtree);
+        //print_statistics(std::cout, lib, *rtree);
     }
 #elif SIBENCH_RTREE_LOAD_BLK
     std::unique_ptr<si::ISpatialIndex> rtree;
@@ -229,7 +269,7 @@ void run_benchmark(std::string const& filename,std::string const& query_file,  i
         load_r.accumulate(marks);
         // debugging
         //sibench::print_result(std::cout, lib, marks);
-        print_statistics(std::cout, lib, *rtree);
+        //print_statistics(std::cout, lib, *rtree);
     }
 #else
 #error Unknown rtree loading method
@@ -282,8 +322,8 @@ void run_benchmark(std::string const& filename,std::string const& query_file,  i
     }
 
     // single line per run
-    std::cout << mem_stats::get_mem() << "End Mem" << std::endl;
-    sibench::print_result(std::cout, lib, load_r, query_r);
+    sm->flush();
+    print_result(std::cout, lib, load_r, query_r, *rtree);
 }
 
 int main(int argc, char* argv[])
@@ -291,18 +331,11 @@ int main(int argc, char* argv[])
     try
     {
         std::string const lib("lsi");
-
-        sibench::print_result_header(std::cout, lib);
-
-        // Generate random objects for indexing
-        //auto const boxes = sibench::generate_boxes(sibench::max_insertions);
-
-        std::cout << argv[1] <<" " << argv[2] << std::endl;
-        int dim = std::atoi(argv[3]);
-
         int node_size = std::atoi(argv[4]);
-        // std::cout << dim <<" Two dimen data passed" << std::endl;
-        std::cout << mem_stats::get_mem() << "Start Mem........" << std::endl;
+        int dim = std::atoi(argv[3]);
+        if (node_size == 2) {
+            print_result_header(std::cout, lib);
+        }
 
         run_benchmark(argv[1], argv[2], dim, node_size);
 

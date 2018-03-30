@@ -242,7 +242,7 @@ inline std::ostream& print_result(std::ostream& os, std::string const& /*lib*/, 
     assert(load.min_capacity == load.min_capacity);
     assert(query.max_capacity == query.max_capacity);
 
-    std::streamsize wn(5), wf(10);
+    std::streamsize wn(5), wf(14);
     os << std::left << std::setfill(' ') << std::fixed << std::setprecision(6)
        << std::setw(wn) << load.max_capacity
        << std::setw(wn) << load.min_capacity
@@ -254,7 +254,7 @@ inline std::ostream& print_result(std::ostream& os, std::string const& /*lib*/, 
 
 inline std::ostream& print_result_header(std::ostream& os, std::string const& lib)
 {
-    std::streamsize const wn(5), wf(10), vn(2);
+    std::streamsize const wn(5), wf(14), vn(2);
     os << sibench::get_banner(lib) << ' ' << std::setw(wn * vn + wf * vn) << std::setfill('-') << ' ' << std::endl;
     os << std::left << std::setfill(' ')
        << std::setw(wn * vn) << "capacity" << std::setw(wf) << "load" << std::setw(wf) << "query"

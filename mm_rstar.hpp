@@ -42,8 +42,8 @@ namespace mmrstar {
         length = status.st_size;
         num_rects = length / sizeof(typrect);
 
-        std::cout << "Number of rectangles: " << num_rects << std::endl;
-        std::cout << "Size of a rectangle: " << sizeof(typrect) << std::endl;
+        //std::cout << "Number of rectangles: " << num_rects << std::endl;
+        //std::cout << "Size of a rectangle: " << sizeof(typrect) << std::endl;
 
         i = 0;
         do {
